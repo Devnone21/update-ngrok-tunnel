@@ -17,12 +17,12 @@ class Tunnel:
 
 load_dotenv(find_dotenv())
 SYSLOG = '/var/log/syslog'
-# SYSLOG = 'host.syslog.log'
+#SYSLOG = 'host.syslog.log'
 
 
 def update_tunnels(tunnels:dict):
-    sql = '''INSERT INTO ngtunnel (name, url, addr, t) VALUES ('%s', '%s', '%s', '%s') 
-             ON CONFLICT (name) DO UPDATE SET (url, addr, t) = (EXCLUDED.url, EXCLUDED.addr, EXCLUDED.t);
+    sql = '''INSERT INTO ngtunnel (name, t, url, addr) VALUES (%s, %s, %s, %s) 
+             ON CONFLICT (name, t) DO NOTHING;
         '''
     conn = None
     try:
@@ -34,10 +34,10 @@ def update_tunnels(tunnels:dict):
             database=os.getenv("DB_NAME"),
         )
         cur = conn.cursor()
-        # update PSQL
+        # update to PSQL DB
         for tn_name, tn in tunnels.items():
-            cur.execute(sql, (tn_name, tn.url, tn.addr, tn.t))
-        # Commit the changes to DB
+            cur.execute(sql, (tn_name, tn.t, tn.url, tn.addr))
+            # print(cur.statusmessage, tn)
         conn.commit()
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
